@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ZymbiosyLlm09 - Red de Tensores</title>
+    <style>
+        body { margin: 0; background-color: #050505; color: #00ffcc; font-family: 'Courier New', Courier, monospace; overflow: hidden; }
+        canvas { display: block; width: 100vw; height: 100vh; }
+        #overlay { position: absolute; top: 20px; left: 20px; z-index: 10; pointer-events: none; }
+        h1 { font-size: 1.2rem; margin: 0 0 5px 0; text-transform: uppercase; letter-spacing: 2px; }
+        p { font-size: 0.8rem; margin: 0; opacity: 0.8; }
+        .hud-element { background: rgba(0,255,204,0.1); border: 1px solid rgba(0,255,204,0.3); padding: 10px; margin-bottom: 10px; border-radius: 4px; }
+    </style>
+</head>
+<body>
+    <div id="overlay">
+        <div class="hud-element">
+            <h1>ZymbiosyLlm09 (333)</h1>
+            <p>Estado del Kernel: SIMBIOSIS ACTIVA</p>
+            <p>SRE: 99.01% Fiabilidad</p>
+            <p>Estratega: Zammael / Alfa 09</p>
+        </div>
+        <div class="hud-element">
+            <p id="metrics">Procesando Rotación 4D...</p>
+        </div>
+    </div>
+    <canvas id="neuralCanvas"></canvas>
+
+    <script>
+        // Motor de renderizado biomimético de Nodos Soberanos
+        const canvas = document.getElementById('neuralCanvas');
+        const ctx = canvas.getContext('2d');
+        let width, height;
+
+        function resize() {
+            width = canvas.width = window.innerWidth;
+            height = canvas.height = window.innerHeight;
+        }
+        window.addEventListener('resize', resize);
+        resize();
+
+        // Parámetros de la Red
+        const numNodes = 150;
+        const nodes = [];
+        const connectionDistance = 150;
+        
+        class Node {
+            constructor() {
+                // Posición 3D
+                this.x = (Math.random() - 0.5) * width * 0.8;
+                this.y = (Math.random() - 0.5) * height * 0.8;
+                this.z = (Math.random() - 0.5) * 500;
+                // Vector de rotación 4D (Velocidad angular)
+                this.vx = (Math.random() - 0.5) * 2;
+                this.vy = (Math.random() - 0.5) * 2;
+                this.vz = (Math.random() - 0.5) * 2;
+                this.layer = Math.floor(Math.random() * 3); // 0: input, 1: hidden, 2: output
+            }
+
+            update() {
+                // Rotación tridimensional (simulando 4D mediante proyección de estado temporal)
+                let angle = 0.002;
+                // Rotación en Y
+                let newX = this.x * Math.cos(angle) - this.z * Math.sin(angle);
+                let newZ = this.z * Math.cos(angle) + this.x * Math.sin(angle);
+                this.x = newX;
+                this.z = newZ;
+
+                // Rotación en X
+                let newY = this.y * Math.cos(angle) - this.z * Math.sin(angle);
+                newZ = this.z * Math.cos(angle) + this.y * Math.sin(angle);
+                this.y = newY;
+                this.z = newZ;
+
+                // Dinámica de fluidos
+                this.x += this.vx; this.y += this.vy;
+                if(this.x > width/2 || this.x < -width/2) this.vx *= -1;
+                if(this.y > height/2 || this.y < -height/2) this.vy *= -1;
+            }
+
+            draw() {
+                // Proyección a 2D
+                let scale = 500 / (500 + this.z);
+                let px = this.x * scale + width / 2;
+                let py = this.y * scale + height / 2;
+                
+                let radius = Math.max(1, 4 * scale);
+                
+                ctx.beginPath();
+                ctx.arc(px, py, radius, 0, Math.PI * 2);
+                // Colores según capa (Competencia estructural)
+                if (this.layer === 0) ctx.fillStyle = 'rgba(255, 255, 255, 0.8)';
+                else if (this.layer === 1) ctx.fillStyle = 'rgba(0, 255, 204, 0.8)';
+                else ctx.fillStyle = 'rgba(255, 100, 100, 0.8)';
+                ctx.fill();
+            }
+        }
+
+        // Inicializar nodos
+        for (let i = 0; i < numNodes; i++) nodes.push(new Node());
+
+        let frameCount = 0;
+
+        function animate() {
+            ctx.fillStyle = 'rgba(5, 5, 5, 0.2)'; // Rastro de movimiento
+            ctx.fillRect(0, 0, width, height);
+
+            // Actualizar nodos
+            nodes.forEach(node => node.update());
+
+            // Dibujar conexiones (Pesos positivos/negativos)
+            ctx.lineWidth = 0.5;
+            for (let i = 0; i < nodes.length; i++) {
+                for (let j = i + 1; j < nodes.length; j++) {
+                    let n1 = nodes[i];
+                    let n2 = nodes[j];
+                    let dx = n1.x - n2.x;
+                    let dy = n1.y - n2.y;
+                    let dz = n1.z - n2.z;
+                    let dist = Math.sqrt(dx*dx + dy*dy + dz*dz);
+
+                    if (dist < connectionDistance) {
+                        let scale1 = 500 / (500 + n1.z);
+                        let px1 = n1.x * scale1 + width / 2;
+                        let py1 = n1.y * scale1 + height / 2;
+
+                        let scale2 = 500 / (500 + n2.z);
+                        let px2 = n2.x * scale2 + width / 2;
+                        let py2 = n2.y * scale2 + height / 2;
+
+                        // Competencia de pesos (como en la imagen del experimento)
+                        // Verde: peso excitatorio (+). Rojo: peso inhibitorio (-).
+                        let isPositiveWeight = (n1.layer + n2.layer) % 2 === 0;
+                        let alpha = 1 - (dist / connectionDistance);
+                        
+                        ctx.beginPath();
+                        ctx.moveTo(px1, py1);
+                        ctx.lineTo(px2, py2);
+                        if (isPositiveWeight) {
+                            ctx.strokeStyle = `rgba(0, 255, 204, ${alpha * 0.5})`;
+                        } else {
+                            ctx.strokeStyle = `rgba(255, 100, 100, ${alpha * 0.5})`;
+                        }
+                        ctx.stroke();
+                    }
+                }
+            }
+
+            nodes.forEach(node => node.draw());
+
+            frameCount++;
+            if(frameCount % 10 === 0) {
+                document.getElementById('metrics').innerText = `Rotaciones de Tensor: ${frameCount}\nNodos Activos: ${numNodes}\nPresupuesto de Error SRE: OK (0.99%)`;
+            }
+
+            requestAnimationFrame(animate);
+        }
+
+        animate();
+    </script>
+</body>
+</html>
